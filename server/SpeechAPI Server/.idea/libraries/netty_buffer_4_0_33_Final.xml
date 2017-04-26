@@ -1,0 +1,17 @@
+<component name="libraryTable">
+  <library name="netty-buffer-4.0.33.Final">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/netty-buffer-4.0.33.Final.jar!/" />
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/netty-codec-4.0.33.Final.jar!/" />
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/netty-codec-http-4.0.33.Final.jar!/" />
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/netty-common-4.0.33.Final.jar!/" />
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/netty-handler-4.0.33.Final.jar!/" />
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/netty-transport-4.0.33.Final.jar!/" />
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/vertx-core-3.2.0.jar!/" />
+      <root url="jar://$USER_HOME$/Downloads/vertx-web-3.0.0.jar!/" />
+      <root url="jar://$USER_HOME$/Desktop/lib/vertx/commons-codec-1.7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
