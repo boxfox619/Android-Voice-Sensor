@@ -13,6 +13,7 @@ import java.util.Map;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 
@@ -23,7 +24,7 @@ import com.enertalktalk.sttsapplication.voice.Recognizer;
 
 import net.sourceforge.javaflacencoder.FLAC_FileEncoder;
 
-public class Recorder implements Runnable {
+public class Recorder {
     private final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private final int RECORDER_CHANNELS = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private final int WAVE_CHANNEL_MONO = 1;
@@ -34,13 +35,14 @@ public class Recorder implements Runnable {
     public final long WORD_GAPS = 1500;
     public final int AUDIO_LEVEL_MIN = 2800;
 
-    public final String API_KEY= "";
+    public final String API_KEY = "";
 
     private AudioRecord mAudioRecord;
     private boolean mIsRecording;
     private BufferedInputStream mBIStream;
     private BufferedOutputStream mBOStream;
     private int mAudioLen = 0;
+    private boolean running, block;
 
     private Recognizer recognizer;
     private VoiceCaptureListener listener;
@@ -53,20 +55,38 @@ public class Recorder implements Runnable {
         mIsRecording = false;
     }
 
-    @Override
-    public void run() {
-        Log.e("Recorder", "Start");
-        mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDER_SAMPLERATE, RECORDER_CHANNELS,
-                RECORDER_AUDIO_ENCODING, BUFFER_SIZE);
-        mAudioRecord.startRecording();
-        mIsRecording = true;
-        File file = convertToFlac(writeAudioDataToFile());
-        try {
-            String result = recognizer.request(file).getResponse();
-            listener.capture(result);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void start() {
+        running = true;
+        new AsyncTask() {
+            @Override
+            protected Object doInBackground(Object[] params) {
+                Log.e("Recorder", "Start");
+                while (running) {
+                    if (block) continue;
+                    mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDER_SAMPLERATE, RECORDER_CHANNELS,
+                            RECORDER_AUDIO_ENCODING, BUFFER_SIZE);
+                    mAudioRecord.startRecording();
+                    mIsRecording = true;
+                    File file = convertToFlac(writeAudioDataToFile());
+                    try {
+                        String result = recognizer.request(file).getResponse();
+                        if (block) continue;
+                        listener.capture(result);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return null;
+            }
+        }.execute();
+    }
+
+    public void stop() {
+        running = false;
+    }
+
+    public void wait(boolean block) {
+        this.block = block;
     }
 
     private File convertToFlac(File wavAudioFile) {
