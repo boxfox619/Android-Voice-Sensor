@@ -1,15 +1,12 @@
-package com.enertalktalk.sttsapplication.capture;
+package com.enertalktalk.sttsapplication.voice.capture;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,8 +19,7 @@ import android.util.Log;
 import com.androidquery.AQuery;
 import com.androidquery.callback.AjaxCallback;
 import com.androidquery.callback.AjaxStatus;
-import com.enertalktalk.sttsapplication.NaverAPITTS;
-import com.enertalktalk.sttsapplication.capture.VoiceCaptureListener;
+import com.enertalktalk.sttsapplication.voice.Recognizer;
 
 import net.sourceforge.javaflacencoder.FLAC_FileEncoder;
 
@@ -38,19 +34,21 @@ public class Recorder implements Runnable {
     public final long WORD_GAPS = 1500;
     public final int AUDIO_LEVEL_MIN = 2800;
 
+    public final String API_KEY= "";
+
     private AudioRecord mAudioRecord;
     private boolean mIsRecording;
-    private String mFileName;
     private BufferedInputStream mBIStream;
     private BufferedOutputStream mBOStream;
     private int mAudioLen = 0;
 
+    private Recognizer recognizer;
     private VoiceCaptureListener listener;
-
 
     public Recorder(VoiceCaptureListener listener) {
         super();
         this.listener = listener;
+        recognizer = new Recognizer(Recognizer.Languages.KOREAN, API_KEY);
         BUFFER_SIZE = AudioRecord.getMinBufferSize(RECORDER_SAMPLERATE, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
         mIsRecording = false;
     }
@@ -62,31 +60,20 @@ public class Recorder implements Runnable {
                 RECORDER_AUDIO_ENCODING, BUFFER_SIZE);
         mAudioRecord.startRecording();
         mIsRecording = true;
-        File file = writeAudioDataToFile();
-        request(file);
+        File file = convertToFlac(writeAudioDataToFile());
+        try {
+            String result = recognizer.request(file).getResponse();
+            listener.capture(result);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private File convertToFlac(File wavAudioFile) {
-        File flacAudioFile = new File(wavAudioFile.getPath());
-        flacAudioFile.renameTo(new File(flacAudioFile.getParentFile(), "voice.flac"));
+        File flacAudioFile = new File(wavAudioFile.getParentFile(), "voice.flac");
         FLAC_FileEncoder flacEncoder = new FLAC_FileEncoder();
         flacEncoder.encode(wavAudioFile, flacAudioFile);
         return flacAudioFile;
-    }
-
-    private void request(File file) {
-        Log.e("Recorder", "try");
-        String url = "http://boxfoxsw.com:8080";
-        Map<String, Object> requestParams = new HashMap<String, Object>();
-        requestParams.put("source", file);
-        AQuery aq = new AQuery(listener.getContext());
-        aq.ajax(url, requestParams, String.class, new AjaxCallback<String>() {
-            @Override
-            public void callback(String url, String object,
-                                 AjaxStatus status) {
-                listener.capture(object);
-            }
-        });
     }
 
     private File writeAudioDataToFile() {

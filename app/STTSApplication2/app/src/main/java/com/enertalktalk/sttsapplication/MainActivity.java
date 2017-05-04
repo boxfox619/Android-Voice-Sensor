@@ -5,23 +5,16 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.androidquery.AQuery;
 import com.androidquery.callback.AjaxCallback;
 import com.androidquery.callback.AjaxStatus;
-import com.enertalktalk.sttsapplication.capture.Recorder;
-import com.enertalktalk.sttsapplication.capture.VoiceCaptureListener;
-import com.victor.loading.rotate.RotateLoading;
+import com.enertalktalk.sttsapplication.voice.capture.Recorder;
+import com.enertalktalk.sttsapplication.voice.capture.VoiceCaptureListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements VoiceCaptureListener {
 
@@ -36,8 +29,6 @@ public class MainActivity extends AppCompatActivity implements VoiceCaptureListe
         TextView titleTV = (TextView) findViewById(R.id.textView3);
         titleTV.setTypeface(type);
 
-        //new VoiceRecorder(this, this).start();
-        //NaverAPITTS.play(MainActivity.this,"안녕하세요 기모띠 입니다.");
         Recorder recorder = new Recorder(this);
         new Thread(recorder).start();
 

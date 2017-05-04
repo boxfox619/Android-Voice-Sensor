@@ -1,4 +1,4 @@
-package com.enertalktalk.sttsapplication.capture;
+package com.enertalktalk.sttsapplication.voice.capture;
 
 import android.content.Context;
 
