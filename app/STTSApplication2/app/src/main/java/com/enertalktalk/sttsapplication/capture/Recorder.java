@@ -25,6 +25,8 @@ import com.androidquery.callback.AjaxStatus;
 import com.enertalktalk.sttsapplication.NaverAPITTS;
 import com.enertalktalk.sttsapplication.capture.VoiceCaptureListener;
 
+import net.sourceforge.javaflacencoder.FLAC_FileEncoder;
+
 public class Recorder implements Runnable {
     private final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private final int RECORDER_CHANNELS = AudioFormat.CHANNEL_CONFIGURATION_MONO;
@@ -64,7 +66,15 @@ public class Recorder implements Runnable {
         request(file);
     }
 
-    private void request(File file){
+    private File convertToFlac(File wavAudioFile) {
+        File flacAudioFile = new File(wavAudioFile.getPath());
+        flacAudioFile.renameTo(new File(flacAudioFile.getParentFile(), "voice.flac"));
+        FLAC_FileEncoder flacEncoder = new FLAC_FileEncoder();
+        flacEncoder.encode(wavAudioFile, flacAudioFile);
+        return flacAudioFile;
+    }
+
+    private void request(File file) {
         Log.e("Recorder", "try");
         String url = "http://boxfoxsw.com:8080";
         Map<String, Object> requestParams = new HashMap<String, Object>();
@@ -137,7 +147,6 @@ public class Recorder implements Runnable {
                         }
                     }
                 }
-
                 mBOStream.flush();
                 mAudioLen = (int) tempFile.length();
                 mBIStream = new BufferedInputStream(new FileInputStream(tempFile));
