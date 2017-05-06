@@ -32,9 +32,8 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:25.1.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'net.sourceforge.javaflacencoder:java-flac-encoder:0.3.6'
-    compile 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
     testCompile 'junit:junit:4.12'
     compile 'com.googlecode.android-query:android-query:0.25.9'
-    compile 'com.victor:lib:1.0.4'
+    compile 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
+    compile 'com.writingminds:FFmpegAndroid:0.3.2'
 }

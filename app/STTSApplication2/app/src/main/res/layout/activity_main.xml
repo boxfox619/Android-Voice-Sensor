@@ -15,12 +15,6 @@
         android:layout_alignParentStart="true"
         android:id="@+id/textView"/>
 
-    <com.enertalktalk.sttsapplication.GifImageView
-        android:id="@+id/gifImageView"
-        android:layout_width="170dp"
-        android:layout_height="170dp"
-        android:layout_centerInParent="true" />
-
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"

@@ -7,22 +7,19 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
+import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.util.Log;
 
 import com.androidquery.AQuery;
-import com.androidquery.callback.AjaxCallback;
-import com.androidquery.callback.AjaxStatus;
 import com.enertalktalk.sttsapplication.voice.Recognizer;
 
-import net.sourceforge.javaflacencoder.FLAC_FileEncoder;
+import cafe.adriel.androidaudioconverter.AndroidAudioConverter;
+import cafe.adriel.androidaudioconverter.callback.IConvertCallback;
 
 public class Recorder {
     private final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
@@ -44,18 +41,21 @@ public class Recorder {
     private int mAudioLen = 0;
     private boolean running, block;
 
+    private Context context;
     private Recognizer recognizer;
     private VoiceCaptureListener listener;
 
-    public Recorder(VoiceCaptureListener listener) {
+    public Recorder(Context context, VoiceCaptureListener listener) {
         super();
         this.listener = listener;
+        this.context = context;
         recognizer = new Recognizer(Recognizer.Languages.KOREAN, API_KEY);
         BUFFER_SIZE = AudioRecord.getMinBufferSize(RECORDER_SAMPLERATE, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
         mIsRecording = false;
     }
 
     public void start() {
+        if(running)return;
         running = true;
         new AsyncTask() {
             @Override
@@ -65,16 +65,34 @@ public class Recorder {
                     if (block) continue;
                     mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                             RECORDER_AUDIO_ENCODING, BUFFER_SIZE);
+
                     mAudioRecord.startRecording();
                     mIsRecording = true;
-                    File file = convertToFlac(writeAudioDataToFile());
-                    try {
-                        String result = recognizer.request(file).getResponse();
-                        if (block) continue;
-                        listener.capture(result);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    if (block) continue;
+                    block = true;
+                    AndroidAudioConverter.with(context)
+                            .setFile(writeAudioDataToFile())
+                            .setFormat(cafe.adriel.androidaudioconverter.model.AudioFormat.FLAC)
+                            .setCallback(new IConvertCallback() {
+                                @Override
+                                public void onSuccess(File file) {
+                                    try {
+                                        String result = recognizer.request(file).getResponse();
+                                        listener.capture(result);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    block = false;
+                                }
+
+                                @Override
+                                public void onFailure(Exception e) {
+                                    Log.e("Recording", "fail to convert");
+                                    e.printStackTrace();
+                                    block = false;
+                                }
+                            })
+                            .convert();
                 }
                 return null;
             }
@@ -89,22 +107,11 @@ public class Recorder {
         this.block = block;
     }
 
-    private File convertToFlac(File wavAudioFile) {
-        File flacAudioFile = new File(wavAudioFile.getParentFile(), "voice.flac");
-        FLAC_FileEncoder flacEncoder = new FLAC_FileEncoder();
-        flacEncoder.encode(wavAudioFile, flacAudioFile);
-        return flacAudioFile;
-    }
-
     private File writeAudioDataToFile() {
         byte[] buffer = new byte[BUFFER_SIZE];
         byte[] data = new byte[BUFFER_SIZE];
-        File tempFile = new File(Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                + "/test.bak");
-        File waveFile = new File(Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                + "/waveAudio.wav");
+        File tempFile = new File(context.getCacheDir() + "/test.bak");
+        File waveFile = new File(context.getCacheDir() + "/waveAudio.wav");
         try {
             mBOStream = new BufferedOutputStream(new FileOutputStream(tempFile));
         } catch (FileNotFoundException e) {
